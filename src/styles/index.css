@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+:root {
+  --surface-color: #ffffff;
+  --surface-soft-color: #f4f4f5;
+  --surface-strong-color: #e4e4e7;
+  --text-color: #18181b;
+  --text-mute-color: #71717a;
+  --border-color: #e4e4e7;
+  --bg-body: #ffffff;
+}
+
+/* 
+  só ativa se <html class="dark"> estiver presente.
+*/
+html.dark {
+  --surface-color: #1f1f23;
+  --surface-soft-color: #2a2a31;
+  --surface-strong-color: #3a3a46;
+  --text-color: #fafafa;
+  --text-mute-color: #a1a1aa;
+  --border-color: #3a3a46;
+  --bg-body: #0f0f12;
+}
+body {
+  background-color: var(--bg-body);
+  color: var(--text-color);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", Roboto, "Helvetica Neue", sans-serif;
+}
+.card-surface {
+  @apply bg-surface shadow-sm border border-[color:var(--border-color)] rounded-lg p-4;
+}
