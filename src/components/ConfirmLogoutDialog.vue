@@ -25,22 +25,17 @@
   </template>
   
   <script setup lang="ts">
-
-  import { inject } from 'vue'
+  import { useDialog } from 'primevue/usedialog'
   
-  interface DialogRef {
-    close: () => void
-  }
-  
-  const dialogRef = inject<DialogRef | null>('dialogRef', null)
+  const dialogRef = useDialog()
   
   function onCancel() {
-    dialogRef?.close()
+    dialogRef.close()
   }
   
   function onConfirm() {
     console.log('✅ Logout confirmado - aqui entraria a lógica real de logout')
-    dialogRef?.close()
+    dialogRef.close()
   }
   </script>
   
