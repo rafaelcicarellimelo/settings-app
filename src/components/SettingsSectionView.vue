@@ -5,78 +5,105 @@
                bg-[var(--surface-color)]
                border border-[color:var(--border-color)]
                rounded-xl shadow-sm
-               flex flex-col md:flex-row relative"
+               flex flex-col md:flex-row relative overflow-hidden"
       >
-        <!-- COLUNA ESQUERDA -->
-        <aside
-          class="w-full md:w-64 border-b md:border-b-0 md:border-r
-                 border-[color:var(--border-color)]
-                 p-4 flex flex-col gap-4"
-        >
-          <ul class="flex flex-col text-sm">
-            <li
-              v-for="section in sections"
-              :key="section.key"
-            >
-              <router-link
-                :to="section.route"
-                class="flex items-start gap-2 w-full px-3 py-2 rounded-lg transition-colors
-                       hover:bg-[var(--surface-soft-color)]"
-                :class="{
-                  'bg-[var(--surface-soft-color)] border border-[color:var(--border-color)]':
-                    section.key === activeSection
-                }"
-              >
-                <i :class="['pi', section.icon, 'text-base']" />
-                <div class="flex-1">
-                  <div class="font-medium" :style="{ color: 'var(--text-color)' }">
-                    {{ section.label }}
-                  </div>
-                  <div class="text-[11px]" :style="{ color: 'var(--text-mute-color)' }">
-                    {{ section.desc }}
-                  </div>
-                </div>
-              </router-link>
-            </li>
-          </ul>
+        <!-- OVERLAY mobile -->
+        <div
+          v-if="showMobileMenu"
+          class="fixed inset-0 bg-black/50 z-40 md:hidden"
+          @click="closeMobileMenu"
+        ></div>
   
-          <div class="border-t border-[color:var(--border-color)] pt-4 mt-auto text-sm">
+        <!-- SIDEBAR DESKTOP -->
+        <aside
+          class="hidden md:flex md:flex-col md:w-64 md:border-r
+                 border-[color:var(--border-color)]
+                 p-4 gap-4 flex-shrink-0"
+        >
+          <SidebarMenu
+            :sections="sections"
+            :activeSection="activeSection"
+            @logout="openLogoutModal"
+            @navigate="() => {}"
+          />
+        </aside>
+  
+        <!-- SIDEBAR MOBILE (drawer) -->
+        <aside
+          class="md:hidden fixed top-0 left-0 h-full w-64 max-w-[80%] z-50
+                 bg-[var(--surface-color)]
+                 border-r border-[color:var(--border-color)]
+                 shadow-xl flex flex-col p-4 gap-4
+                 transition-transform duration-200"
+          :class="showMobileMenu ? 'translate-x-0' : '-translate-x-full'"
+        >
+          <!-- Header mobile do drawer -->
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs font-semibold tracking-wide uppercase"
+                 :style="{ color: 'var(--text-mute-color)' }">
+              Configurações
+            </div>
+  
             <button
-              @click="openLogoutModal"
-              class="flex items-start gap-2 w-full px-3 py-2 rounded-lg transition-colors
-                     hover:bg-[var(--surface-soft-color)] text-left"
+              class="p-2 rounded-lg hover:bg-[var(--surface-soft-color)]"
+              @click="closeMobileMenu"
             >
-              <i class="pi pi-sign-out text-base text-red-500" />
-              <div class="flex-1">
-                <div class="font-medium text-red-500">
-                  Sair
-                </div>
-                <div class="text-[11px]" :style="{ color: 'var(--text-mute-color)' }">
-                  Encerrar sessão atual
-                </div>
-              </div>
+              <i class="pi pi-times text-base" :style="{ color: 'var(--text-color)' }"></i>
             </button>
           </div>
   
-          <footer class="text-[10px] text-right" :style="{ color: 'var(--text-mute-color)' }">
-            v0.1.0
-          </footer>
+          <SidebarMenu
+            :sections="sections"
+            :activeSection="activeSection"
+            mobile
+            @navigate="closeMobileMenu"
+            @logout="() => { closeMobileMenu(); openLogoutModal(); }"
+          />
         </aside>
   
-        <!-- COLUNA DIREITA -->
-        <section class="flex-1 p-4 md:p-6">
-          <h1
-            class="text-base font-semibold mb-4 flex flex-wrap items-center gap-3 justify-between"
-            :style="{ color: 'var(--text-color)' }"
+        <!-- CONTEÚDO PRINCIPAL -->
+        <section class="flex-1 p-4 md:p-6 relative w-full">
+          <!-- HEADER -->
+          <header
+            class="mb-4 flex items-start md:items-center justify-between flex-col md:flex-row gap-4"
           >
-            <span class="flex items-center gap-2">
-              <i :class="['pi', currentSectionIcon, 'text-base']" />
-              <span>{{ currentSectionTitle }}</span>
-            </span>
+            <!-- Esquerda: hambúrguer (mobile) + título -->
+            <div class="flex items-center gap-3 w-full md:w-auto">
+              <!-- Botão hambúrguer SÓ no mobile -->
+              <button
+                class="md:hidden p-2 rounded-lg border border-[color:var(--border-color)]
+                       bg-[var(--surface-color)] hover:bg-[var(--surface-soft-color)]
+                       transition-colors"
+                @click="toggleMobileMenu"
+              >
+                <i class="pi pi-bars text-base" :style="{ color: 'var(--text-color)' }"></i>
+              </button>
   
-            <ThemeToggle />
-          </h1>
+              <div class="flex items-start gap-2">
+                <i :class="['pi', currentSectionIcon, 'text-base']" />
+                <div class="flex flex-col">
+                  <span class="text-base font-semibold" :style="{ color: 'var(--text-color)' }">
+                    {{ currentSectionTitle }}
+                  </span>
   
+                  <!-- Subtítulo só no mobile -->
+                  <span
+                    class="text-[11px] leading-snug md:hidden"
+                    :style="{ color: 'var(--text-mute-color)' }"
+                  >
+                    {{ currentSectionSubtitle }}
+                  </span>
+                </div>
+              </div>
+            </div>
+  
+            <!-- Direita: ThemeToggle -->
+            <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+              <ThemeToggle />
+            </div>
+          </header>
+  
+          <!-- LISTA DE ITENS -->
           <ul
             class="bg-[var(--surface-color)]
                    border border-[color:var(--border-color)]
@@ -90,23 +117,27 @@
                 'border-b border-[color:var(--border-color)]': idx !== items.length-1
               }"
             >
+              <!-- Ícone da esquerda -->
               <i :class="['pi', item.icon, 'text-base mt-[2px]']" />
   
               <div class="flex-1">
-                <div class="flex items-center justify-between">
-                  <div class="font-medium" :style="{ color: 'var(--text-color)' }">
+                <!-- Título + ações -->
+                <div class="flex items-start justify-between gap-2">
+                  <div class="font-medium text-[.95rem]" :style="{ color: 'var(--text-color)' }">
                     {{ item.title }}
                   </div>
   
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2 flex-shrink-0">
+                    <!-- valor simples -->
                     <span
                       v-if="item.value && !item.switch"
-                      class="text-xs"
+                      class="text-xs whitespace-nowrap"
                       :style="{ color: 'var(--text-mute-color)' }"
                     >
                       {{ item.value }}
                     </span>
   
+                    <!-- switch -->
                     <label
                       v-if="item.switch"
                       class="relative inline-flex items-center cursor-pointer select-none"
@@ -129,6 +160,7 @@
                       ></div>
                     </label>
   
+                    <!-- chevron -->
                     <i
                       v-if="item.chevron"
                       class="pi pi-angle-right text-xs"
@@ -137,6 +169,7 @@
                   </div>
                 </div>
   
+                <!-- Descrição -->
                 <div
                   v-if="item.desc"
                   class="text-[11px] leading-snug mt-1"
@@ -148,6 +181,7 @@
             </li>
           </ul>
   
+          <!-- BLOCO EXTRA -->
           <div
             v-if="extraBlock"
             class="mt-6 text-[11px]"
@@ -177,7 +211,7 @@
           </div>
         </section>
   
-        <!-- MODAL DE LOGOUT (controle 100% local) -->
+        <!-- MODAL DE LOGOUT -->
         <Dialog
           v-model:visible="showLogoutModal"
           modal
@@ -190,12 +224,12 @@
               Tem certeza que deseja sair?
             </p>
   
-            <div class="flex justify-end gap-3">
+            <div class="flex flex-col-reverse sm:flex-row justify-end gap-3">
               <button
                 @click="cancelLogout"
                 class="px-3 py-2 rounded-lg border border-[color:var(--border-color)]
-                       bg-surface hover:bg-[var(--surface-soft-color)]
-                       text-sm font-medium"
+                       bg-[var(--surface-color)] hover:bg-[var(--surface-soft-color)]
+                       text-sm font-medium w-full sm:w-auto"
                 :style="{ color: 'var(--text-color)' }"
               >
                 Cancelar
@@ -204,7 +238,7 @@
               <button
                 @click="confirmLogout"
                 class="px-3 py-2 rounded-lg text-sm font-medium text-white
-                       bg-red-500 hover:bg-red-600"
+                       bg-red-500 hover:bg-red-600 w-full sm:w-auto"
               >
                 Confirmar
               </button>
@@ -212,18 +246,18 @@
           </div>
         </Dialog>
   
-        <!-- Toast de logout -->
+        <!-- TOAST -->
         <transition name="fade">
           <div
             v-if="showLogoutToast"
             class="fixed bottom-4 right-4 z-50
                    bg-[var(--surface-color)]
                    border border-[color:var(--border-color)]
-                   rounded-lg shadow-lg px-4 py-3 text-sm flex items-center gap-2"
+                   rounded-lg shadow-lg px-4 py-3 text-sm flex items-center gap-2 max-w-[90%]"
             :style="{ color: 'var(--text-color)' }"
           >
             <i class="pi pi-check-circle text-green-500 text-base"></i>
-            <span>Sessão encerrada com sucesso.</span>
+            <span class="text-[13px] leading-snug">Sessão encerrada com sucesso.</span>
           </div>
         </transition>
       </div>
@@ -234,49 +268,55 @@
   import { computed, reactive, ref } from 'vue'
   import Dialog from 'primevue/dialog'
   import ThemeToggle from './ThemeToggle.vue'
+  import SidebarMenu, { type SectionInfo } from './SidebarMenu.vue'
   
   const props = defineProps<{
     activeSection: string
   }>()
   
-  /* estado do modal e do toast */
+  /* ===== ESTADOS ===== */
   const showLogoutModal = ref(false)
   const showLogoutToast = ref(false)
+  const showMobileMenu = ref(false)
+  
   let toastTimer: number | null = null
   
+  /* ===== MENU MOBILE ===== */
+  function toggleMobileMenu() {
+    showMobileMenu.value = !showMobileMenu.value
+  }
+  function closeMobileMenu() {
+    showMobileMenu.value = false
+  }
+  
+  /* ===== LOGOUT FLOW ===== */
   function openLogoutModal() {
     showLogoutModal.value = true
   }
-  
   function cancelLogout() {
     showLogoutModal.value = false
   }
-  
   function confirmLogout() {
-    // simula logout real
+    // simula logout
     localStorage.removeItem('auth_token')
     console.log('✅ Logout confirmado: sessão encerrada.')
   
-    // fecha modal
     showLogoutModal.value = false
-  
-    // mostra toast
+    showMobileMenu.value = false
     triggerLogoutToast()
   }
   
   function triggerLogoutToast() {
     showLogoutToast.value = true
   
-    if (toastTimer) {
-      clearTimeout(toastTimer)
-    }
+    if (toastTimer) clearTimeout(toastTimer)
   
     toastTimer = window.setTimeout(() => {
       showLogoutToast.value = false
     }, 3000)
   }
   
-  /* tipos auxiliares */
+  /* ===== TIPAGEM DE ITENS DA SEÇÃO ===== */
   interface SettingsItem {
     icon: string
     title: string
@@ -295,15 +335,7 @@
     }
   }
   
-  interface SectionInfo {
-    key: string
-    label: string
-    desc: string
-    icon: string
-    route: string
-  }
-  
-  /* menu lateral */
+  /* ===== MENU LATERAL ===== */
   const sections: SectionInfo[] = [
     {
       key: 'privacidade',
@@ -335,11 +367,12 @@
     },
   ]
   
-  /* conteúdo das seções */
+
   const allSectionContent: Record<
     string,
     {
       title: string
+      subtitle?: string
       icon: string
       items: SettingsItem[]
       extraBlock?: ExtraBlock
@@ -347,6 +380,7 @@
   > = {
     privacidade: {
       title: 'Privacidade',
+      subtitle: 'Controle quem pode ver suas coisas',
       icon: 'pi-lock',
       items: reactive([
         {
@@ -397,6 +431,7 @@
   
     conta: {
       title: 'Conta',
+      subtitle: 'Senha, e-mail e segurança',
       icon: 'pi-user',
       items: reactive([
         {
@@ -420,6 +455,7 @@
   
     status: {
       title: 'Status da conta',
+      subtitle: 'Alertas e restrições',
       icon: 'pi-info-circle',
       items: reactive([
         {
@@ -438,6 +474,7 @@
   
     ajuda: {
       title: 'Ajuda',
+      subtitle: 'Central de suporte',
       icon: 'pi-question-circle',
       items: reactive([
         {
@@ -454,12 +491,13 @@
     },
   }
   
-  /* seção ativa */
+
   const current = computed(() => {
     return allSectionContent[props.activeSection] ?? allSectionContent['privacidade']
   })
   
   const currentSectionTitle = computed(() => current.value.title)
+  const currentSectionSubtitle = computed(() => current.value.subtitle ?? '')
   const currentSectionIcon = computed(() => current.value.icon)
   const items = computed(() => current.value.items)
   const extraBlock = computed(() => current.value.extraBlock)
