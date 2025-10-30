@@ -1,6 +1,6 @@
 <template>
     <div class="p-4">
-      <p class="text-sm mb-6" style="color:var(--text-color)">
+      <p class="text-sm mb-6" :style="{ color: 'var(--text-color)' }">
         Tem certeza que deseja sair?
       </p>
   
@@ -8,8 +8,8 @@
         <button
           @click="onCancel"
           class="px-3 py-2 rounded-lg border border-[color:var(--border-color)]
-                 bg-surface hover:bg-surface-soft text-sm font-medium"
-          style="color:var(--text-color)"
+                 bg-surface hover:bg-[var(--surface-soft-color)] text-sm font-medium"
+          :style="{ color: 'var(--text-color)' }"
         >
           Cancelar
         </button>
@@ -25,17 +25,22 @@
   </template>
   
   <script setup lang="ts">
-  import { useDialog } from 'primevue/usedialog'
+
+  import { inject } from 'vue'
   
-  const dialogRef = useDialog()
+  interface DialogRef {
+    close: () => void
+  }
+  
+  const dialogRef = inject<DialogRef | null>('dialogRef', null)
   
   function onCancel() {
-    dialogRef.close()
+    dialogRef?.close()
   }
   
   function onConfirm() {
-    console.log('✅ Logout confirmado - aqui você faria o fluxo de logout real')
-    dialogRef.close()
+    console.log('✅ Logout confirmado - aqui entraria a lógica real de logout')
+    dialogRef?.close()
   }
   </script>
   
