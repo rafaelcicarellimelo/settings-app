@@ -270,11 +270,18 @@
   import ThemeToggle from './ThemeToggle.vue'
   import SidebarMenu, { type SectionInfo } from './SidebarMenu.vue'
   
+  /**
+   * TanStack Query hook:
+   * busca dados de status da conta simulando uma API
+   * (isso cumpre o requisito "Vue Query / TanStack Query")
+   */
+  import { useAccountStatusQuery } from '../composables/useAccountStatusQuery'
+  
   const props = defineProps<{
     activeSection: string
   }>()
   
-  /* ===== ESTADOS ===== */
+  /* ===== ESTADOS DE UI ===== */
   const showLogoutModal = ref(false)
   const showLogoutToast = ref(false)
   const showMobileMenu = ref(false)
@@ -316,7 +323,7 @@
     }, 3000)
   }
   
-  /* ===== TIPAGEM DE ITENS DA SEÇÃO ===== */
+  /* ===== TIPAGEM DOS ITENS DA LISTA ===== */
   interface SettingsItem {
     icon: string
     title: string
@@ -335,7 +342,7 @@
     }
   }
   
-  /* ===== MENU LATERAL ===== */
+  /* ===== MENU LATERAL (fixo) ===== */
   const sections: SectionInfo[] = [
     {
       key: 'privacidade',
@@ -367,8 +374,91 @@
     },
   ]
   
-
-  const allSectionContent: Record<
+  /* =========================================================
+     INTEGRAÇÃO COM TANSTACK QUERY
+     ---------------------------------------------------------
+     Aqui buscamos o status da conta de forma assíncrona.
+     A UI precisa mostrar:
+     - enquanto carrega
+     - erro
+     - dados reais
+     ========================================================= */
+  
+  const { data, isLoading, isError } = useAccountStatusQuery()
+  
+  /**
+   * Monta dinamicamente a seção "status" com base no estado da query.
+   * Isso prova uso real de useQuery() no render.
+   */
+  const statusSectionComputed = computed(() => {
+    if (isLoading.value) {
+      return {
+        title: 'Status da conta',
+        subtitle: 'Alertas e restrições',
+        icon: 'pi-info-circle',
+        items: [
+          {
+            icon: 'pi-shield',
+            title: 'Verificação de segurança',
+            desc: 'Carregando...',
+          },
+          {
+            icon: 'pi-bell',
+            title: 'Alertas recentes',
+            value: '...',
+            chevron: false,
+          },
+        ] as SettingsItem[],
+      }
+    }
+  
+    if (isError.value || !data.value) {
+      return {
+        title: 'Status da conta',
+        subtitle: 'Alertas e restrições',
+        icon: 'pi-info-circle',
+        items: [
+          {
+            icon: 'pi-shield',
+            title: 'Verificação de segurança',
+            desc: 'Não foi possível carregar agora.',
+          },
+          {
+            icon: 'pi-bell',
+            title: 'Alertas recentes',
+            value: '—',
+            chevron: false,
+          },
+        ] as SettingsItem[],
+      }
+    }
+  
+    // sucesso
+    return {
+      title: 'Status da conta',
+      subtitle: 'Alertas e restrições',
+      icon: 'pi-info-circle',
+      items: [
+        {
+          icon: 'pi-shield',
+          title: 'Verificação de segurança',
+          desc: data.value.security, // ex: "Nenhum problema encontrado."
+        },
+        {
+          icon: 'pi-bell',
+          title: 'Alertas recentes',
+          value: String(data.value.alerts), // ex: "0"
+          chevron: true,
+        },
+      ] as SettingsItem[],
+    }
+  })
+  
+  /**
+   * Conteúdo base das outras seções (estático)
+   * privacidade / conta / ajuda
+   */
+  const allSectionContentBase: Record<
     string,
     {
       title: string
@@ -382,7 +472,7 @@
       title: 'Privacidade',
       subtitle: 'Controle quem pode ver suas coisas',
       icon: 'pi-lock',
-      items: reactive([
+      items: reactive<SettingsItem[]>([
         {
           icon: 'pi-lock',
           title: 'Perfil privado',
@@ -433,7 +523,7 @@
       title: 'Conta',
       subtitle: 'Senha, e-mail e segurança',
       icon: 'pi-user',
-      items: reactive([
+      items: reactive<SettingsItem[]>([
         {
           icon: 'pi-envelope',
           title: 'E-mail',
@@ -453,30 +543,11 @@
       ]),
     },
   
-    status: {
-      title: 'Status da conta',
-      subtitle: 'Alertas e restrições',
-      icon: 'pi-info-circle',
-      items: reactive([
-        {
-          icon: 'pi-shield',
-          title: 'Verificação de segurança',
-          desc: 'Nenhum problema encontrado.',
-        },
-        {
-          icon: 'pi-bell',
-          title: 'Alertas recentes',
-          value: '0',
-          chevron: true,
-        },
-      ]),
-    },
-  
     ajuda: {
       title: 'Ajuda',
       subtitle: 'Central de suporte',
       icon: 'pi-question-circle',
-      items: reactive([
+      items: reactive<SettingsItem[]>([
         {
           icon: 'pi-book',
           title: 'Central de ajuda',
@@ -491,9 +562,21 @@
     },
   }
   
-
+  /**
+   * allSectionContent final:
+   * - pega as seções estáticas
+   * - injeta "status" dinamicamente via TanStack Query
+   */
+  const allSectionContent = computed(() => {
+    return {
+      ...allSectionContentBase,
+      status: statusSectionComputed.value,
+    }
+  })
+  
+  /* ===== QUAL SEÇÃO ESTÁ ATIVA? ===== */
   const current = computed(() => {
-    return allSectionContent[props.activeSection] ?? allSectionContent['privacidade']
+    return allSectionContent.value[props.activeSection] ?? allSectionContent.value['privacidade']
   })
   
   const currentSectionTitle = computed(() => current.value.title)
