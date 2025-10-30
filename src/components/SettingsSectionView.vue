@@ -5,8 +5,9 @@
                bg-[var(--surface-color)]
                border border-[color:var(--border-color)]
                rounded-xl shadow-sm
-               flex flex-col md:flex-row"
+               flex flex-col md:flex-row relative"
       >
+        <!-- COLUNA ESQUERDA -->
         <aside
           class="w-full md:w-64 border-b md:border-b-0 md:border-r
                  border-[color:var(--border-color)]
@@ -41,7 +42,7 @@
   
           <div class="border-t border-[color:var(--border-color)] pt-4 mt-auto text-sm">
             <button
-              @click="onLogout"
+              @click="openLogoutModal"
               class="flex items-start gap-2 w-full px-3 py-2 rounded-lg transition-colors
                      hover:bg-[var(--surface-soft-color)] text-left"
             >
@@ -62,6 +63,7 @@
           </footer>
         </aside>
   
+        <!-- COLUNA DIREITA -->
         <section class="flex-1 p-4 md:p-6">
           <h1
             class="text-base font-semibold mb-4 flex flex-wrap items-center gap-3 justify-between"
@@ -174,22 +176,107 @@
             </button>
           </div>
         </section>
+  
+        <!-- MODAL DE LOGOUT (controle 100% local) -->
+        <Dialog
+          v-model:visible="showLogoutModal"
+          modal
+          dismissableMask
+          :style="{ width: '90%', maxWidth: '400px' }"
+          header="Confirmar saída"
+        >
+          <div class="p-4">
+            <p class="text-sm mb-6" :style="{ color: 'var(--text-color)' }">
+              Tem certeza que deseja sair?
+            </p>
+  
+            <div class="flex justify-end gap-3">
+              <button
+                @click="cancelLogout"
+                class="px-3 py-2 rounded-lg border border-[color:var(--border-color)]
+                       bg-surface hover:bg-[var(--surface-soft-color)]
+                       text-sm font-medium"
+                :style="{ color: 'var(--text-color)' }"
+              >
+                Cancelar
+              </button>
+  
+              <button
+                @click="confirmLogout"
+                class="px-3 py-2 rounded-lg text-sm font-medium text-white
+                       bg-red-500 hover:bg-red-600"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </Dialog>
+  
+        <!-- Toast de logout -->
+        <transition name="fade">
+          <div
+            v-if="showLogoutToast"
+            class="fixed bottom-4 right-4 z-50
+                   bg-[var(--surface-color)]
+                   border border-[color:var(--border-color)]
+                   rounded-lg shadow-lg px-4 py-3 text-sm flex items-center gap-2"
+            :style="{ color: 'var(--text-color)' }"
+          >
+            <i class="pi pi-check-circle text-green-500 text-base"></i>
+            <span>Sessão encerrada com sucesso.</span>
+          </div>
+        </transition>
       </div>
     </div>
   </template>
   
   <script setup lang="ts">
-  import { computed, reactive } from 'vue'
-  import { useDialog } from 'primevue/usedialog'
-  import { defineAsyncComponent } from 'vue'
+  import { computed, reactive, ref } from 'vue'
+  import Dialog from 'primevue/dialog'
   import ThemeToggle from './ThemeToggle.vue'
   
- 
   const props = defineProps<{
     activeSection: string
   }>()
   
-
+  /* estado do modal e do toast */
+  const showLogoutModal = ref(false)
+  const showLogoutToast = ref(false)
+  let toastTimer: number | null = null
+  
+  function openLogoutModal() {
+    showLogoutModal.value = true
+  }
+  
+  function cancelLogout() {
+    showLogoutModal.value = false
+  }
+  
+  function confirmLogout() {
+    // simula logout real
+    localStorage.removeItem('auth_token')
+    console.log('✅ Logout confirmado: sessão encerrada.')
+  
+    // fecha modal
+    showLogoutModal.value = false
+  
+    // mostra toast
+    triggerLogoutToast()
+  }
+  
+  function triggerLogoutToast() {
+    showLogoutToast.value = true
+  
+    if (toastTimer) {
+      clearTimeout(toastTimer)
+    }
+  
+    toastTimer = window.setTimeout(() => {
+      showLogoutToast.value = false
+    }, 3000)
+  }
+  
+  /* tipos auxiliares */
   interface SettingsItem {
     icon: string
     title: string
@@ -216,7 +303,7 @@
     route: string
   }
   
-
+  /* menu lateral */
   const sections: SectionInfo[] = [
     {
       key: 'privacidade',
@@ -248,7 +335,7 @@
     },
   ]
   
-
+  /* conteúdo das seções */
   const allSectionContent: Record<
     string,
     {
@@ -367,7 +454,7 @@
     },
   }
   
-
+  /* seção ativa */
   const current = computed(() => {
     return allSectionContent[props.activeSection] ?? allSectionContent['privacidade']
   })
@@ -376,21 +463,16 @@
   const currentSectionIcon = computed(() => current.value.icon)
   const items = computed(() => current.value.items)
   const extraBlock = computed(() => current.value.extraBlock)
-  
- 
-  const dialog = useDialog()
-  const ConfirmLogoutDialog = defineAsyncComponent(
-    () => import('./ConfirmLogoutDialog.vue')
-  )
-  
-  function onLogout() {
-    dialog.open(ConfirmLogoutDialog, {
-      props: {
-        header: 'Confirmar saída',
-        style: { width: '90%', maxWidth: '400px' },
-        modal: true,
-      },
-    })
-  }
   </script>
+  
+  <style scoped>
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: opacity .18s ease;
+  }
+  .fade-enter-from,
+  .fade-leave-to {
+    opacity: 0;
+  }
+  </style>
   
