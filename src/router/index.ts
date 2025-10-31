@@ -1,30 +1,22 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 
-import SettingsView from '../views/SettingsView.vue'
-import SubSettingsView from '../views/SubSettingsView.vue'
+import SettingsMenuOnlyView from '../views/SettingsMenuOnlyView.vue'
+import SettingsSectionView from '../components/SettingsSectionView.vue'
 
-/**
- * Rotas:
- * /settings               -> tela principal com menu lateral
- * /settings/:submenu      -> ex: /settings/privacidade
- */
 const routes: RouteRecordRaw[] = [
   {
     path: '/settings',
-    name: 'settings',
-    component: SettingsView,
+    name: 'settings-root',
+    component: SettingsMenuOnlyView,
   },
   {
     path: '/settings/:submenu',
-    name: 'settings-sub',
-    component: SubSettingsView,
-    props: true, 
-  },
-  {
-    
-    path: '/:pathMatch(.*)*',
-    redirect: '/settings',
+    name: 'settings-section',
+    component: SettingsSectionView,
+    props: route => ({
+      activeSection: route.params.submenu,
+    }),
   },
 ]
 
