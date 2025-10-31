@@ -2,6 +2,7 @@
 
 import { createApp } from 'vue'
 import App from './App.vue'
+import './assets/transitions.css'
 
 
 import router from './router'
