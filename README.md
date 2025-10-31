@@ -104,6 +104,83 @@ Principais objetivos:
 
 ---
 
+🌗 Tema Claro / Escuro
+
+O app fornece um toggle visual para alternar entre tema claro e escuro.
+
+Integração:
+
+Tailwind usa darkMode: 'class'
+
+PrimeVue troca o tema entre versões claras e escuras
+
+A escolha do usuário é salva em localStorage, então ao recarregar o app ele mantém o último tema.
+
+🔄 Comportamento de Rotas
+
+/settings
+
+Lista todas as opções de configurações (Privacidade, Conta, Ajuda, etc.)
+
+Exibe também a opção “Sair”
+
+/settings/:submenu
+
+Exibe o conteúdo daquela seção (por ex. privacidade)
+
+No desktop: menu lateral continua visível
+
+No mobile: mostra apenas o conteúdo da subpágina com um botão de “voltar” no topo para retornar ao menu
+
+As navegações entre rotas usam transições suaves para dar sensação de app nativo.
+
+📡 TanStack Query
+
+Configurado no projeto para gerenciar fetch de dados reativos.
+
+Existe um composable (por exemplo useUserSettings.ts) que:
+
+Usa useQuery para buscar dados mockados de perfil/configurações
+
+Expõe data, isLoading, isError
+
+Permite simular chamadas assíncronas reais
+
+Essa abordagem já demonstra desacoplamento de lógica de dados da camada de UI.
+
+📘 Storybook
+
+Storybook configurado com suporte ao Vue 3.
+
+Integração com @storybook/addon-vitest e Playwright para testes visuais/funcionais.
+
+Pelo menos 3 componentes do app foram catalogados no Storybook com variações de estado (por exemplo: tema claro vs escuro, ligado/desligado, ativo/inativo etc.).
+
+Isso garante documentação visual e facilita revisão de UI isolada.
+
+🧪 Qualidade e Boas Práticas
+
+Tipagem forte em props e emits usando TypeScript
+
+Componentes reutilizáveis para seções de configurações
+
+Separação clara entre:
+
+Layout e apresentação (componentes Vue)
+
+Lógica de dados (TanStack Query / composables)
+
+Infraestrutura (plugins, tema, PWA)
+
+Tratamento básico de erro de requisição no composable de dados
+
+Build de produção sem erros
+
+Sem erros de console no preview de produção
+
+
+
+
 🛠 Instalação e Execução
 
 1. Clonar o repositório
@@ -133,3 +210,5 @@ npm run test
 Gerar os arquivos otimizados (bundle final):
 
 npm run build
+
+
